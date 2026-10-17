@@ -192,3 +192,7 @@ table.t tfoot td { font-weight: 800; border-bottom: none; }
 .mymk .n { flex: 1; min-width: 0; font-size: 13px; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .mymk .v { font-size: 13px; font-weight: 800; }
 .mymk > div.wide { grid-column: 1 / -1; }
+/* Iconos redondos */
+.badge, .badge.sm { border-radius: 50%; }
+.badge img { border-radius: 50%; }
+.badge.has-logo.b-world img, .badge.has-logo.b-em img { border-radius: 50%; }
