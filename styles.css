@@ -134,8 +134,6 @@ button { cursor: pointer; }
 .sheet-panel.snap { transition: transform .2s ease-out; }
 .sheet-backdrop { transition: opacity .2s; }
 .sheet-top { position: sticky; top: 0; z-index: 2; background: #12161A; margin: 0 -20px 6px; padding: 10px 20px 8px; display: flex; justify-content: center; touch-action: none; cursor: grab; }
-.sheet-x { position: absolute; right: 12px; top: 6px; width: 40px; height: 40px; border-radius: 20px; border: none; background: #1C2328; color: var(--text2); display: grid; place-items: center; }
-.sheet-x svg { width: 18px; height: 18px; stroke: currentColor; stroke-width: 2.2; fill: none; stroke-linecap: round; }
 @keyframes up { from { transform: translateY(24px); opacity: .6; } to { transform: none; opacity: 1; } }
 .sheet-grip { width: 44px; height: 5px; border-radius: 3px; background: #3A434A; margin: 6px auto 14px; }
 .sheet h3 { margin: 0 0 4px; font-size: 18px; font-weight: 800; }

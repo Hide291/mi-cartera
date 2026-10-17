@@ -650,7 +650,13 @@
     if (document.visibilityState === 'visible' && st.at && Date.now() - new Date(st.at).getTime() > 60000) refresh(false);
   });
   window.addEventListener('resize', () => { if (st.tab === 'inicio' && st.data) mountChart(C.summary(st.data, todayISO()), todayISO()); });
-  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+  if ('serviceWorker' in navigator) {
+    // Si llega una versión nueva de la app, se recarga una vez para no mezclar archivos viejos y nuevos
+    const hadController = !!navigator.serviceWorker.controller;
+    let reloaded = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => { if (hadController && !reloaded) { reloaded = true; location.reload(); } });
+    navigator.serviceWorker.register('sw.js').then((r) => r.update()).catch(() => {});
+  }
 
   // Para pruebas automáticas
   window.__mc = { st, render, fmtNum };
