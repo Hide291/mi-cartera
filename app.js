@@ -118,6 +118,16 @@
     return '';
   }
 
+  // Aviso si los precios llevan demasiado sin actualizarse (p. ej. si falla la descarga automática)
+  function staleBanner(S) {
+    const msgs = [];
+    const lu = st.data && st.data.lastUpdate;
+    if (lu && Date.now() - new Date(lu).getTime() > 30 * 3600 * 1000) msgs.push('los precios no se descargan desde el ' + dLocal(lu));
+    if (S.navDate && C.daysBetween(S.navDate, todayISO()) > 6) msgs.push('el último valor liquidativo es del ' + dShort(S.navDate));
+    return msgs.length ? `<div class="banner">Atención: ${esc(msgs.join(' y '))}. Avisa a Claude.</div>` : '';
+  }
+  function dLocal(iso) { const d = new Date(iso); return d.toLocaleDateString('es-ES', { day: 'numeric', month: 'numeric' }) + ' ' + timeHM(iso); }
+
   // Instalación como app (Chrome Android muestra el evento cuando la página es instalable)
   let installEvt = null;
   window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); installEvt = e; render(); });
@@ -159,7 +169,7 @@
           <button class="fab" data-act="add" aria-label="Añadir operación">${ICON.plus}</button>
         </div>
       </header>
-      ${statusBanner()}${installBanner()}
+      ${statusBanner()}${staleBanner(S)}${installBanner()}
       <section class="total">
         <span class="label">Patrimonio total</span>
         <span class="big num">${eur(S.total)}</span>
@@ -422,7 +432,7 @@
       </form>
       <div class="group-h">Datos</div>
       <div class="pad"><dl class="kv">
-        <dt>Última descarga de precios</dt><dd>${lu ? esc(dShort(lu.slice(0, 10)) + ' ' + timeHM(lu)) : '—'}</dd>
+        <dt>Última descarga de precios</dt><dd>${lu ? esc(dLocal(lu)) : '—'}</dd>
         <dt>Último VL de fondos</dt><dd>${dLong(S.navDate)}</dd>
         <dt>Datos en la app</dt><dd>${st.at ? esc(timeHM(st.at)) : '—'}</dd>
       </dl>
