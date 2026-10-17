@@ -464,7 +464,7 @@
     const a = p.asset;
     const tot = p.lots.reduce((acc, l) => ({ n: acc.n + Number(l.participaciones), c: acc.c + Number(l.coste), v: acc.v + l.valor }), { n: 0, c: 0, v: 0 });
     openSheet(`<h3 id="sheet-title">${esc(a.nombre)}</h3>
-      <div class="sub">${esc(a.isin)} · TER ${fmtNum(a.ter, 2)} % · VL ${fmtNum(p.price, 6)} € (${dLong(p.quote && p.quote.date)})</div>
+      <div class="sub">${esc(a.isin)} · TER ${fmtNum(a.ter, 2)} % · VL ${fmtNum(p.quote && p.quote.nav ? p.quote.nav : p.price, 6)} € (${dLong(p.quote && p.quote.date)})</div>
       <dl class="kv">
         <dt>Valor</dt><dd class="num">${eur(p.value)}</dd>
         <dt>Coste fiscal (FIFO)</dt><dd class="num">${eur(p.cost)}</dd>

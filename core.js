@@ -60,7 +60,10 @@
     if (asset.tipo === 'fondo') {
       if (!series || !series.length) return null;
       const last = series[series.length - 1], prev = series.length > 1 ? series[series.length - 2] : last;
-      return { price: last[1], prev: prev[1], date: last[0], prevDate: prev[0], live: false };
+      // MyInvestor valora con el VL redondeado a 3 decimales: se hace igual para que las cifras coincidan
+      const dec = cfg(data, 'navDecimals', 3), k = Math.pow(10, dec);
+      const r = (x) => Math.round(x * k) / k;
+      return { price: r(last[1]), prev: r(prev[1]), date: last[0], prevDate: prev[0], live: false, nav: last[1] };
     }
     const live = data.live && data.live[asset.id];
     const fx = fxNow(data);
