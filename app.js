@@ -204,7 +204,19 @@
 
   // Logos: dominio por activo guardado en la hoja (Config → logos), nunca en el código público
   function logos() { try { const l = st.data && st.data.config && st.data.config.logos; return typeof l === 'string' ? JSON.parse(l) : (l || {}); } catch (e) { return {}; } }
+  // Iconos propios para fondos e índices (globo): verde = mundo desarrollado, ámbar = emergentes
+  const GLOBE = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.6 2.4 3.9 5.2 3.9 8.5s-1.3 6.1-3.9 8.5c-2.6-2.4-3.9-5.2-3.9-8.5S9.4 5.9 12 3.5z"/></svg>';
+  const GLOBE_EM = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.6 2.4 3.9 5.2 3.9 8.5s-1.3 6.1-3.9 8.5c-2.6-2.4-3.9-5.2-3.9-8.5S9.4 5.9 12 3.5z"/><path d="M15.5 8.5l3-3m0 0h-2.6m2.6 0v2.6" stroke-width="1.8"/></svg>';
+  function glyphFor(key) {
+    const a = st.data && st.data.assets && st.data.assets.find((x) => x.id === key);
+    if (!a) return null;
+    if (a.clase === 'world' || key === 'IWDA') return ['g-world', GLOBE];
+    if (a.clase === 'em' || key === 'EMIM') return ['g-em', GLOBE_EM];
+    return null;
+  }
   function badge(key, cls, text) {
+    const g = glyphFor(key);
+    if (g) return `<span class="badge glyph ${g[0]}${cls.includes('sm') ? ' sm' : ''}">${g[1]}</span>`;
     const dom = logos()[key];
     const img = dom ? `<img src="https://www.google.com/s2/favicons?domain=${encodeURIComponent(dom)}&sz=128" alt="" loading="lazy" onerror="this.remove()">` : '';
     return `<span class="badge ${cls}${dom ? ' has-logo' : ''}"><b>${esc(text)}</b>${img}</span>`;
