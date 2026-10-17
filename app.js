@@ -188,12 +188,12 @@
           <span class="end"><b class="num">${eur(S.stocksValue)}</b><span class="num ${cls(S.stocksValue - S.stocksAporta)}">${sPct(S.stocksAporta ? (S.stocksValue - S.stocksAporta) / S.stocksAporta : 0, 1)}</span></span>
         </button>` : ''}
         ${tr ? `<button class="row" data-open="tr">
-          <span class="badge b-tr">TR</span>
+          ${badge('TR', 'b-tr', 'TR')}
           <span class="mid"><span class="t">Trade Republic · ${pct(tr.rate)}</span><span class="st">${sEur(tr.perDayNet)}/día neto · cobro el ${dShort(tr.nextPay)}</span></span>
           <span class="end"><b class="num">${eur(S.trBalance)}</b><span class="num pos">${sEur(tr.monthNet)} neto · mes</span></span>
         </button>` : ''}
         <button class="row" data-open="ing">
-          <span class="badge b-ing">ING</span>
+          ${badge('ING', 'b-ing', 'ING')}
           <span class="mid"><span class="t">ING Nómina</span><span class="st">Colchón del día a día</span></span>
           <span class="end"><b class="num">${eur(S.ingBalance)}</b></span>
         </button>
@@ -201,12 +201,21 @@
       ${renderMarketsCard(S)}`;
   }
 
+
+  // Logos: dominio por activo guardado en la hoja (Config → logos), nunca en el código público
+  function logos() { try { const l = st.data && st.data.config && st.data.config.logos; return typeof l === 'string' ? JSON.parse(l) : (l || {}); } catch (e) { return {}; } }
+  function badge(key, cls, text) {
+    const dom = logos()[key];
+    const img = dom ? `<img src="https://www.google.com/s2/favicons?domain=${encodeURIComponent(dom)}&sz=128" alt="" loading="lazy" onerror="this.remove()">` : '';
+    return `<span class="badge ${cls}${dom ? ' has-logo' : ''}"><b>${esc(text)}</b>${img}</span>`;
+  }
+
   function lastStockDate(S) { return S.stocks.map((p) => p.quote && p.quote.date).filter(Boolean).sort().pop() || null; }
 
   function posRow(p) {
     const b = p.asset.clase === 'world' ? ['b-world', 'MW'] : p.asset.clase === 'em' ? ['b-em', 'EM'] : ['b-gen', p.asset.corto.slice(0, 3)];
     return `<button class="row" data-open="asset" data-id="${esc(p.asset.id)}">
-      <span class="badge ${b[0]}">${esc(b[1])}</span>
+      ${badge(p.asset.id, b[0], b[1])}
       <span class="mid"><span class="t">iShares ${esc(p.asset.corto)}</span><span class="st">${fmtNum(p.shares, 2)} part. · VL ${dShort(p.quote && p.quote.date)}</span></span>
       <span class="end"><b class="num">${eur(p.value)}</b><span class="num ${cls(p.gain)}">${sPct(p.gainPct)}</span></span>
     </button>`;
@@ -264,14 +273,15 @@
   }
 
   function renderMarketsCard(S) {
-    const mk = C.markets(st.data);
-    const mv = C.stockMovers(S);
-    const live = st.data.live && st.data.live._fetched;
+    // Mis mercados: solo lo que tienes (fondos con su VL oficial, acciones y la divisa). El detalle completo está en la pestaña Mercados.
+    const fx = C.markets(st.data).find((m) => m.fx);
+    const items = S.funds.map((p) => ({ id: p.asset.id, cls: p.asset.clase === 'world' ? 'b-world' : 'b-em', t: p.asset.clase === 'world' ? 'MW' : 'EM', n: p.asset.clase === 'world' ? 'World S' : 'Emergentes S', pct: p.dayPct }))
+      .concat(S.stocks.map((p) => ({ id: p.asset.id, cls: 'b-stk', t: p.asset.corto.slice(0, 3).toUpperCase(), n: p.asset.corto, pct: p.dayPct })));
+    if (fx && fx.price) items.push({ id: 'EURUSD', cls: 'b-gen', t: '€/$', n: 'Euro / Dólar (EUR/USD)', val: fmtNum(fx.price, 4), wide: true });
+    const sd = lastStockDate(S);
     return `<section class="card">
-      <div class="card-h"><h2>Mercados</h2><span class="aside">${live ? 'cotiz. ' + esc(timeHM(live)) : ''}</span></div>
-      <div class="mk">${mk.map((m) => `<div><span class="n">${esc(m.asset.corto)}</span>
-        <span class="v num ${m.fx ? '' : cls(m.pct)}">${m.fx ? fmtNum(m.price, 4) : sPct(m.pct)}</span></div>`).join('')}</div>
-      ${mv ? `<div class="movers"><span class="muted">Tus acciones hoy</span><span><span style="color:var(--text2)">${esc(mv.best.asset.corto)}</span> <b class="${cls(mv.best.pct)}">${sPct(mv.best.pct, 1)}</b> · <span style="color:var(--text2)">${esc(mv.worst.asset.corto)}</span> <b class="${cls(mv.worst.pct)}">${sPct(mv.worst.pct, 1)}</b></span></div>` : ''}
+      <div class="card-h"><h2>Mis mercados</h2><span class="aside">VL ${dShort(S.navDate)}${sd ? ' · acc. ' + dShort(sd) : ''}</span></div>
+      <div class="mymk">${items.map((it) => `<div${it.wide ? ' class="wide"' : ''}>${badge(it.id, it.cls + ' sm', it.t)}<span class="n">${esc(it.n)}</span><span class="v num ${it.val ? '' : cls(it.pct)}">${it.val || sPct(it.pct, 1)}</span></div>`).join('')}</div>
     </section>`;
   }
 
@@ -328,11 +338,11 @@
     return `<div class="page-h"><h1>Mercados</h1><button class="iconbtn${st.loading ? ' spin' : ''}" data-act="refresh" aria-label="Actualizar">${ICON.refresh}</button></div>
       ${statusBanner()}
       <div class="group-h">Índices y divisa</div>
-      <div class="list">${mk.map((m) => `<div class="row"><span class="badge b-gen">${m.fx ? '€/$' : m.asset.id === 'IWDA' ? 'MW' : 'EM'}</span>
+      <div class="list">${mk.map((m) => `<div class="row">${badge(m.fx ? 'EURUSD' : m.asset.id, 'b-gen', m.fx ? '€/$' : m.asset.id === 'IWDA' ? 'MW' : 'EM')}
         <span class="mid"><span class="t">${esc(m.asset.nombre || m.asset.corto)}</span><span class="st">${m.date ? 'sesión ' + dShort(m.date) : 'sin datos'}</span></span>
         <span class="end"><b class="num">${m.fx ? fmtNum(m.price, 4) : m.price ? fmtNum(m.price, 2) : '—'}</b><span class="num ${cls(m.pct)}">${sPct(m.pct)}</span></span></div>`).join('')}</div>
       <div class="group-h">Tus fondos · valor liquidativo oficial</div>
-      <div class="list">${S.funds.map((p) => `<button class="row" data-open="asset" data-id="${esc(p.asset.id)}"><span class="badge ${p.asset.clase === 'world' ? 'b-world' : 'b-em'}">${p.asset.clase === 'world' ? 'MW' : 'EM'}</span>
+      <div class="list">${S.funds.map((p) => `<button class="row" data-open="asset" data-id="${esc(p.asset.id)}">${badge(p.asset.id, p.asset.clase === 'world' ? 'b-world' : 'b-em', p.asset.clase === 'world' ? 'MW' : 'EM')}
         <span class="mid"><span class="t">${esc(p.asset.corto)}</span><span class="st">VL ${dShort(p.quote && p.quote.date)} · TER ${fmtNum(p.asset.ter, 2)} %</span></span>
         <span class="end"><b class="num">${fmtNum(p.price, 4)} €</b><span class="num ${cls(p.dayPct)}">${sPct(p.dayPct)}</span></span></button>`).join('')}</div>
       <div class="group-h">Tus acciones</div>
@@ -343,7 +353,7 @@
   function stockRow(p) {
     const q = p.quote || {};
     const nat = p.asset.moneda === 'USD' && q.native ? ` · ${fmtNum(q.native, 2)} $` : '';
-    return `<div class="row"><span class="badge b-stk">${esc(p.asset.corto.slice(0, 3).toUpperCase())}</span>
+    return `<div class="row">${badge(p.asset.id, 'b-stk', p.asset.corto.slice(0, 3).toUpperCase())}
       <span class="mid"><span class="t">${esc(p.asset.nombre)}</span><span class="st">${fmtNum(p.price, 2)} €${nat} · hoy <span class="${cls(p.dayPct)}">${sPct(p.dayPct, 1)}</span></span></span>
       <span class="end"><b class="num">${eur(p.value)}</b><span class="num ${cls(p.gain)}">${sEur(p.gain)}</span></span></div>`;
   }
@@ -365,13 +375,13 @@
         const isFund = a.tipo === 'fondo';
         const tras = Number(e.l.aporta) === 0 && isFund;
         const t = isFund ? (tras ? 'Traspaso a ' : 'Aportación · ') + a.corto : 'Compra · ' + a.corto;
-        return `<div class="row"><span class="badge ${a.clase === 'world' ? 'b-world' : a.clase === 'em' ? 'b-em' : 'b-stk'}">${a.clase === 'world' ? 'MW' : a.clase === 'em' ? 'EM' : esc(String(a.corto).slice(0, 3).toUpperCase())}</span>
+        return `<div class="row">${badge(e.l.activo, a.clase === 'world' ? 'b-world' : a.clase === 'em' ? 'b-em' : 'b-stk', a.clase === 'world' ? 'MW' : a.clase === 'em' ? 'EM' : String(a.corto).slice(0, 3).toUpperCase())}
           <span class="mid"><span class="t">${esc(t)}</span><span class="st">${dShort(e.d)} · ${fmtNum(e.l.participaciones, isFund ? 2 : 6)} ${isFund ? 'part.' : 'acc.'}${e.l.hasta ? ' · traspasado el ' + dShort(C.addDays(e.l.hasta, 1)) : ''}</span></span>
           <span class="end"><b class="num">${eur(e.l.coste)}</b>${e.l.hasta ? '<span class="muted">cerrado</span>' : ''}</span></div>`;
       }
-      if (e.k === 'est') return `<div class="row"><span class="badge b-tr">TR</span><span class="mid"><span class="t">Intereses ${esc(e.p.periodo)} (estimado)</span><span class="st">${dShort(e.d)} · pendiente de confirmar</span></span><span class="end"><b class="num pos">${sEur(e.p.importe)}</b></span></div>`;
+      if (e.k === 'est') return `<div class="row">${badge('TR', 'b-tr', 'TR')}<span class="mid"><span class="t">Intereses ${esc(e.p.periodo)} (estimado)</span><span class="st">${dShort(e.d)} · pendiente de confirmar</span></span><span class="end"><b class="num pos">${sEur(e.p.importe)}</b></span></div>`;
       const c = e.c;
-      return `<div class="row"><span class="badge ${c.cuenta === 'TR' ? 'b-tr' : 'b-ing'}">${esc(c.cuenta)}</span>
+      return `<div class="row">${badge(c.cuenta, c.cuenta === 'TR' ? 'b-tr' : 'b-ing', c.cuenta)}
         <span class="mid"><span class="t">${esc(label[c.tipo] || c.tipo)}${c.nota ? ' · ' + esc(c.nota) : ''}</span><span class="st">${dShort(c.fecha)}</span></span>
         <span class="end"><b class="num ${cls(Number(c.importe))}">${sEur(Number(c.importe))}</b></span></div>`;
     }).join('') + '</div>').join('');

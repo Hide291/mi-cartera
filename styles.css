@@ -179,3 +179,16 @@ table.t tfoot td { font-weight: 800; border-bottom: none; }
 .skeleton { height: 14px; border-radius: 7px; background: linear-gradient(90deg, #14181B, #1C2226, #14181B); background-size: 200% 100%; animation: sh 1.2s infinite; }
 @keyframes sh { to { background-position: -200% 0; } }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+
+.badge { position: relative; overflow: hidden; }
+.badge b { font-weight: 800; }
+.badge img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border-radius: inherit; background: #fff; }
+.badge.has-logo.b-world { box-shadow: 0 0 0 2px var(--accent); }
+.badge.has-logo.b-em { box-shadow: 0 0 0 2px var(--em); }
+.badge.has-logo.b-world img, .badge.has-logo.b-em img { inset: 3px; width: calc(100% - 6px); height: calc(100% - 6px); border-radius: 8px; object-fit: contain; }
+.badge.sm { width: 26px; height: 26px; border-radius: 8px; font-size: 9px; }
+.mymk { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 10px; }
+.mymk > div { display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: var(--card2); border-radius: 12px; min-width: 0; }
+.mymk .n { flex: 1; min-width: 0; font-size: 13px; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mymk .v { font-size: 13px; font-weight: 800; }
+.mymk > div.wide { grid-column: 1 / -1; }
