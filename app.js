@@ -183,7 +183,7 @@
       <div class="list">
         ${S.funds.map((p) => posRow(p)).join('')}
         ${S.stocks.length ? `<button class="row" data-open="stocks">
-          <span class="badge b-stk">${S.stocks.length}</span>
+          <span class="badge b-stk has-logo local"><b>${S.stocks.length}</b><img src="icons/acciones.png" alt="" onerror="this.remove()"></span>
           <span class="mid"><span class="t">Acciones</span><span class="st">${esc(S.stocks.map((p) => p.asset.corto).join(' · '))}</span></span>
           <span class="end"><b class="num">${eur(S.stocksValue)}</b><span class="num ${cls(S.stocksValue - S.stocksAporta)}">${sPct(S.stocksAporta ? (S.stocksValue - S.stocksAporta) / S.stocksAporta : 0, 1)}</span></span>
         </button>` : ''}
