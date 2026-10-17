@@ -203,3 +203,6 @@ table.t tfoot td { font-weight: 800; border-bottom: none; }
 .badge.g-em { background: #33290F; color: var(--em); box-shadow: inset 0 0 0 1.5px rgba(242,184,75,.45); }
 .badge.local img { background: transparent; }
 .badge.has-logo.local.b-world img, .badge.has-logo.local.b-em img { inset: 2px; width: calc(100% - 4px); height: calc(100% - 4px); object-fit: cover; }
+/* Sin aro de color en los fondos */
+.badge.has-logo.b-world, .badge.has-logo.b-em { box-shadow: none; }
+.badge.has-logo.local.b-world img, .badge.has-logo.local.b-em img { inset: 0; width: 100%; height: 100%; }
