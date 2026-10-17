@@ -212,6 +212,7 @@
     if (!a) return null;
     if (a.tipo === 'fondo') return ['fondo', 'icons/ishares.png'];
     if (a.tipo === 'indice') return ['indice', 'icons/msci.png'];
+    if (a.tipo === 'fx') return ['fx', 'icons/eurusd.png'];
     return null;
   }
   function badge(key, cls, text) {
