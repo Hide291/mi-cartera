@@ -1,4 +1,4 @@
-# Mi Cartera
+# Kapital
 
 App personal (PWA) para seguir una cartera de fondos indexados, acciones y ahorro remunerado.
 

@@ -1,4 +1,4 @@
-/* Mi Cartera — interfaz. Los cálculos están en core.js; aquí solo se pinta. */
+/* Kapital — interfaz. Los cálculos están en core.js; aquí solo se pinta. */
 (function () {
   'use strict';
   const C = window.Core;
@@ -125,7 +125,7 @@
   const standalone = () => window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
   function installBanner() {
     if (standalone()) return '';
-    if (installEvt) return `<div class="banner" style="display:flex;justify-content:space-between;align-items:center;gap:10px">Instala Mi Cartera como app <button class="btn" style="height:36px;font-size:13px" data-act="install">Instalar</button></div>`;
+    if (installEvt) return `<div class="banner" style="display:flex;justify-content:space-between;align-items:center;gap:10px">Instala Kapital como app <button class="btn" style="height:36px;font-size:13px" data-act="install">Instalar</button></div>`;
     return '';
   }
 
@@ -137,7 +137,7 @@
   }
 
   function renderSetup() {
-    return `<div class="page-h"><h1>Mi Cartera</h1></div>
+    return `<div class="page-h"><h1>Kapital</h1></div>
       <div class="pad"><p class="muted">Conecta la app con tu hoja de Google. Pega la dirección de la aplicación web de Apps Script y tu clave secreta (está en la pestaña <b>Config</b> de la hoja).</p>
       <form class="form" data-form="conn">
         <label>Dirección de la aplicación web<input name="url" type="url" required placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off"></label>
@@ -153,7 +153,7 @@
     const xirrSub = S.xirr != null ? `XIRR ${sPct(S.xirr, 1)}` : 'desde compra';
     return `
       <header class="head">
-        <div><div class="hello">${st.data.config && st.data.config.nombre ? 'Hola, ' + esc(st.data.config.nombre) : 'Hola'}</div><h1>Mi Cartera</h1></div>
+        <div><div class="hello">${st.data.config && st.data.config.nombre ? 'Hola, ' + esc(st.data.config.nombre) : 'Hola'}</div><h1>Kapital</h1></div>
         <div style="display:flex;gap:8px">
           <button class="iconbtn${st.loading ? ' spin' : ''}" data-act="refresh" aria-label="Actualizar">${ICON.refresh}</button>
           <button class="fab" data-act="add" aria-label="Añadir operación">${ICON.plus}</button>
