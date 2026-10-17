@@ -174,7 +174,7 @@
         </div>
       </section>
       <section class="tiles">
-        <div class="tile"><span class="l">Hoy</span><span class="v num ${cls(S.day)}">${sEur(S.day)}</span><span class="s">VL ${dShort(S.navDate)}</span></div>
+        <div class="tile"><span class="l">Último día</span><span class="v num ${cls(S.day)}">${sEur(S.day)}</span><span class="s">VL ${dShort(S.navDate)}${lastStockDate(S) ? ' · acc. ' + dShort(lastStockDate(S)) : ''}</span></div>
         <div class="tile"><span class="l">Rentab. total</span><span class="v num ${cls(S.gainPct)}">${sPct(S.gainPct)}</span><span class="s">${xirrSub}</span></div>
         <div class="tile"><span class="l">Invertido</span><span class="v num">${eur(S.aportado, 0)}</span><span class="s">en mercado</span></div>
       </section>
@@ -190,7 +190,7 @@
         ${tr ? `<button class="row" data-open="tr">
           <span class="badge b-tr">TR</span>
           <span class="mid"><span class="t">Trade Republic · ${pct(tr.rate)}</span><span class="st">${sEur(tr.perDayNet)}/día neto · cobro el ${dShort(tr.nextPay)}</span></span>
-          <span class="end"><b class="num">${eur(S.trBalance)}</b><span class="num pos">${sEur(tr.monthNet)} este mes</span></span>
+          <span class="end"><b class="num">${eur(S.trBalance)}</b><span class="num pos">${sEur(tr.monthNet)} neto · mes</span></span>
         </button>` : ''}
         <button class="row" data-open="ing">
           <span class="badge b-ing">ING</span>
@@ -200,6 +200,8 @@
       </div>
       ${renderMarketsCard(S)}`;
   }
+
+  function lastStockDate(S) { return S.stocks.map((p) => p.quote && p.quote.date).filter(Boolean).sort().pop() || null; }
 
   function posRow(p) {
     const b = p.asset.clase === 'world' ? ['b-world', 'MW'] : p.asset.clase === 'em' ? ['b-em', 'EM'] : ['b-gen', p.asset.corto.slice(0, 3)];
