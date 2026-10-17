@@ -210,13 +210,13 @@
   function glyphFor(key) {
     const a = st.data && st.data.assets && st.data.assets.find((x) => x.id === key);
     if (!a) return null;
-    if (a.clase === 'world' || key === 'IWDA') return ['g-world', GLOBE];
-    if (a.clase === 'em' || key === 'EMIM') return ['g-em', GLOBE_EM];
+    if (a.tipo === 'fondo') return ['fondo', 'icons/ishares.png'];
+    if (a.tipo === 'indice') return ['indice', 'icons/msci.png'];
     return null;
   }
   function badge(key, cls, text) {
     const g = glyphFor(key);
-    if (g) return `<span class="badge glyph ${g[0]}${cls.includes('sm') ? ' sm' : ''}">${g[1]}</span>`;
+    if (g) return `<span class="badge ${cls} has-logo local"><b>${esc(text)}</b><img src="${g[1]}" alt="" onerror="this.remove()"></span>`;
     const dom = logos()[key];
     const img = dom ? `<img src="https://www.google.com/s2/favicons?domain=${encodeURIComponent(dom)}&sz=128" alt="" loading="lazy" onerror="this.remove()">` : '';
     return `<span class="badge ${cls}${dom ? ' has-logo' : ''}"><b>${esc(text)}</b>${img}</span>`;

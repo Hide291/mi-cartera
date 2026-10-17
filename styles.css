@@ -201,3 +201,5 @@ table.t tfoot td { font-weight: 800; border-bottom: none; }
 .badge.glyph svg { width: 62%; height: 62%; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 .badge.g-world { background: #12332A; color: var(--accent); box-shadow: inset 0 0 0 1.5px rgba(43,212,164,.45); }
 .badge.g-em { background: #33290F; color: var(--em); box-shadow: inset 0 0 0 1.5px rgba(242,184,75,.45); }
+.badge.local img { background: transparent; }
+.badge.has-logo.local.b-world img, .badge.has-logo.local.b-em img { inset: 2px; width: calc(100% - 4px); height: calc(100% - 4px); object-fit: cover; }
