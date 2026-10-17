@@ -130,9 +130,14 @@ button { cursor: pointer; }
 /* Hojas inferiores */
 .sheet { position: fixed; inset: 0; z-index: 50; }
 .sheet-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,.6); }
-.sheet-panel { position: absolute; left: 0; right: 0; bottom: 0; max-width: 520px; margin: 0 auto; max-height: 88vh; overflow: auto; background: #12161A; border-radius: 22px 22px 0 0; border-top: 1px solid var(--line); padding: 8px 20px calc(24px + var(--safe-b)); animation: up .18s ease-out; }
+.sheet-panel { position: absolute; left: 0; right: 0; bottom: 0; max-width: 520px; margin: 0 auto; max-height: 88vh; overflow: auto; overscroll-behavior: contain; background: #12161A; border-radius: 22px 22px 0 0; border-top: 1px solid var(--line); padding: 0 20px calc(24px + var(--safe-b)); animation: up .18s ease-out; will-change: transform; }
+.sheet-panel.snap { transition: transform .2s ease-out; }
+.sheet-backdrop { transition: opacity .2s; }
+.sheet-top { position: sticky; top: 0; z-index: 2; background: #12161A; margin: 0 -20px 6px; padding: 10px 20px 8px; display: flex; justify-content: center; touch-action: none; cursor: grab; }
+.sheet-x { position: absolute; right: 12px; top: 6px; width: 40px; height: 40px; border-radius: 20px; border: none; background: #1C2328; color: var(--text2); display: grid; place-items: center; }
+.sheet-x svg { width: 18px; height: 18px; stroke: currentColor; stroke-width: 2.2; fill: none; stroke-linecap: round; }
 @keyframes up { from { transform: translateY(24px); opacity: .6; } to { transform: none; opacity: 1; } }
-.sheet-grip { width: 40px; height: 4px; border-radius: 2px; background: #2E363C; margin: 4px auto 14px; }
+.sheet-grip { width: 44px; height: 5px; border-radius: 3px; background: #3A434A; margin: 6px auto 14px; }
 .sheet h3 { margin: 0 0 4px; font-size: 18px; font-weight: 800; }
 .sheet .sub { color: var(--muted); font-size: 13px; margin-bottom: 14px; }
 .kv { display: grid; grid-template-columns: 1fr auto; gap: 8px 12px; font-size: 14px; margin: 10px 0 4px; }

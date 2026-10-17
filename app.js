@@ -409,8 +409,53 @@
 
   // ---------------------------------------------------------------- hojas de detalle
   const sheet = document.getElementById('sheet'), sheetBody = document.getElementById('sheet-body');
-  function openSheet(html) { sheetBody.innerHTML = html; sheet.hidden = false; document.body.style.overflow = 'hidden'; }
-  function closeSheet() { sheet.hidden = true; sheetBody.innerHTML = ''; document.body.style.overflow = ''; }
+  const panel = sheet.querySelector('.sheet-panel'), backdrop = sheet.querySelector('.sheet-backdrop');
+  function openSheet(html) {
+    const wasOpen = !sheet.hidden;
+    sheetBody.innerHTML = html; sheet.hidden = false; document.body.style.overflow = 'hidden';
+    panel.scrollTop = 0; panel.style.transform = ''; backdrop.style.opacity = '';
+    // Una entrada en el historial: el botón "atrás" de Android cierra la hoja en vez de salir de la app
+    if (!wasOpen) history.pushState({ sheet: 1 }, '');
+  }
+  function hideSheet() { sheet.hidden = true; sheetBody.innerHTML = ''; document.body.style.overflow = ''; panel.style.transform = ''; backdrop.style.opacity = ''; }
+  function closeSheet() { if (sheet.hidden) return; if (history.state && history.state.sheet) history.back(); else hideSheet(); }
+  window.addEventListener('popstate', () => { if (!sheet.hidden) hideSheet(); });
+
+  // Deslizar hacia abajo para cerrar: desde la barra superior, o desde cualquier punto si el contenido está arriba del todo
+  (function swipe() {
+    let y0 = 0, t0 = 0, dy = 0, active = false, fromTop = false;
+    const start = (y, target) => {
+      fromTop = !!target.closest('#sheet-top');
+      if (!fromTop && panel.scrollTop > 0) return;
+      if (target.closest('input, select, textarea')) return;
+      active = true; y0 = y; t0 = Date.now(); dy = 0; panel.classList.remove('snap');
+    };
+    const move = (y, ev) => {
+      if (!active) return;
+      dy = y - y0;
+      if (dy <= 0) { if (!fromTop) { active = false; } panel.style.transform = ''; return; }
+      if (!fromTop && panel.scrollTop > 0) { active = false; return; }
+      if (ev.cancelable) ev.preventDefault();
+      panel.style.transform = `translateY(${dy}px)`;
+      backdrop.style.opacity = String(Math.max(0.15, 1 - dy / 500));
+    };
+    const end = () => {
+      if (!active) return;
+      active = false;
+      const v = dy / Math.max(1, Date.now() - t0);
+      panel.classList.add('snap');
+      if (dy > 110 || (dy > 30 && v > 0.6)) {
+        panel.style.transform = 'translateY(100%)';
+        setTimeout(() => { panel.classList.remove('snap'); closeSheet(); }, 180);
+      } else { panel.style.transform = ''; backdrop.style.opacity = ''; }
+    };
+    panel.addEventListener('touchstart', (e) => start(e.touches[0].clientY, e.target), { passive: true });
+    panel.addEventListener('touchmove', (e) => move(e.touches[0].clientY, e), { passive: false });
+    panel.addEventListener('touchend', end); panel.addEventListener('touchcancel', end);
+    // Ratón (ordenador): solo desde la barra superior
+    const top = document.getElementById('sheet-top');
+    top.addEventListener('mousedown', (e) => { start(e.clientY, e.target); const mm = (ev) => move(ev.clientY, ev); const mu = () => { end(); removeEventListener('mousemove', mm); removeEventListener('mouseup', mu); }; addEventListener('mousemove', mm); addEventListener('mouseup', mu); });
+  })();
 
   function sheetAsset(id) {
     const S = C.summary(st.data, todayISO());
