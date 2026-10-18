@@ -1,6 +1,6 @@
 // Service worker: guarda la app para abrirla al instante y sin conexión. Los datos siempre se piden a la red.
-const VERSION = 'mc-v24';
-const SHELL = ['./', 'index.html', 'styles.css?v=24', 'core.js?v=24', 'app.js?v=24', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png'];
+const VERSION = 'mc-v25';
+const SHELL = ['./', 'index.html', 'styles.css?v=25', 'core.js?v=25', 'app.js?v=25', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(VERSION).then((c) => c.addAll(SHELL.map((u) => new Request(u, { cache: 'reload' })))).then(() => self.skipWaiting()));

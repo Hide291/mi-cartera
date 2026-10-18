@@ -214,3 +214,10 @@ table.t tfoot td { font-weight: 800; border-bottom: none; }
 .tile .chev { font-style: normal; color: var(--muted2); margin-left: 2px; }
 .t.day td small { display: block; font-size: 11px; color: var(--muted2); font-weight: 500; margin-top: 1px; }
 .t.day td b { font-weight: 700; }
+
+/* Línea de ganancia tocable */
+.total .gain.tap { background: none; border: 0; padding: 4px 0; margin: -4px 0; cursor: pointer; text-align: left; -webkit-tap-highlight-color: transparent; border-radius: 8px; }
+.total .gain.tap:active { opacity: .7; }
+.total .gain.tap:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.total .gain .chev { font-style: normal; color: var(--muted2); margin-left: 2px; }
+.t.day tr.subt td { font-weight: 700; color: var(--text, inherit); background: rgba(255,255,255,.03); }

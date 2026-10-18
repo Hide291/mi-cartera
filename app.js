@@ -173,7 +173,7 @@
       <section class="total">
         <span class="label">Patrimonio total</span>
         <span class="big num">${eur(S.total)}</span>
-        <div class="gain"><span class="${cls(g)} num">${g >= 0 ? '▲' : '▼'} ${sEur(g)} · ${sPct(S.gainPct)}</span><small>en fondos y acciones</small></div>
+        <button class="gain tap" data-open="gain" aria-label="Ver el desglose de la ganancia"><span class="${cls(g)} num">${g >= 0 ? '▲' : '▼'} ${sEur(g)} · ${sPct(S.gainPct)}</span><small>en fondos y acciones <i class="chev" aria-hidden="true">›</i></small></button>
       </section>
       <section class="chart" id="chart">
         <div class="scrub" id="scrub"></div>
@@ -536,6 +536,26 @@
       <p class="note">No es acumulado: cada día se sustituye por el siguiente. Los fondos solo tienen un precio al día y BlackRock lo publica con un día hábil de retraso, por eso sus fechas van por detrás de las acciones. El % de cada parte es sobre su propio valor.</p>`);
   }
 
+  // Desglose de la ganancia total: por fondo, subtotales e intereses de TR
+  function sheetGain() {
+    const S = C.summary(st.data, todayISO());
+    const fCost = S.funds.reduce((a, p) => a + p.cost, 0), fGain = S.funds.reduce((a, p) => a + p.gain, 0);
+    const sGain = S.stocksValue - S.stocksAporta;
+    const trNet = S.tr ? S.tr.totalPaidNet + S.tr.monthNet : 0;
+    const row = (n, sub, e, p, k) => `<tr class="${k || ''}"><td>${k ? esc(n) : `<b>${esc(n)}</b>`}${sub ? `<small>${esc(sub)}</small>` : ''}</td><td class="num ${cls(e)}">${sEur(e)}</td><td class="num ${p == null ? 'muted' : cls(p)}">${p == null ? '—' : sPct(p)}</td></tr>`;
+    const rows = S.funds.map((p) => row(p.asset.clase === 'world' ? 'World S' : p.asset.clase === 'em' ? 'Emergentes S' : p.asset.corto, 'sobre su coste fiscal', p.gain, p.gainPct)).join('')
+      + row('Subtotal fondos', '', fGain, fCost ? fGain / fCost : 0, 'subt')
+      + (S.stocks.length ? row('Acciones', 'sobre tu dinero (sin el bono)', sGain, S.stocksAporta ? sGain / S.stocksAporta : 0) : '')
+      + row('Total inversiones', 'la cifra de Inicio', S.gain, S.gainPct, 'subt')
+      + (S.tr ? row('Intereses TR', 'netos, cobrados y devengados', trNet, null) : '');
+    openSheet(`<h3 id="sheet-title">Ganancia total</h3>
+      <div class="sub">Acumulada desde tu primera aportación (${dShort(S.firstDate)}/${(S.firstDate || '').slice(2, 4)})</div>
+      <table class="t day"><thead><tr><th>Parte</th><th>€</th><th>%</th></tr></thead>
+      <tbody>${rows}</tbody>
+      <tfoot><tr><td>Total patrimonio</td><td class="num ${cls(S.gain + trNet)}">${sEur(S.gain + trNet)}</td><td></td></tr></tfoot></table>
+      <p class="note">Cada subtotal suma las filas de encima. El % de cada fila es sobre su propia base; en las filas con intereses no se da % porque mezclaría bases distintas. La ganancia de los fondos es la fiscal (como MyInvestor). El coste fiscal de los dos fondos, sumado, es igual a tu dinero aportado a fondos, porque los traspasos no crean dinero nuevo. Puede haber diferencias de 1 céntimo por redondeo.</p>`);
+  }
+
   function sheetStocks() {
     const S = C.summary(st.data, todayISO());
     const g = S.stocksValue - S.stocksAporta;
@@ -620,6 +640,7 @@
     if (t.dataset.open === 'asset') return sheetAsset(t.dataset.id);
     if (t.dataset.open === 'stocks') return sheetStocks();
     if (t.dataset.open === 'day') return sheetDay();
+    if (t.dataset.open === 'gain') return sheetGain();
     if (t.dataset.open === 'tr') return sheetTR();
     if (t.dataset.open === 'ing') return sheetING();
     if (t.dataset.add) { sheetBody.innerHTML = formFor(t.dataset.add); return; }
