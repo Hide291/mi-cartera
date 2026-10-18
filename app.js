@@ -336,7 +336,8 @@
       <line id="cur" x1="0" x2="0" y1="0" y2="${H}" stroke="#5B656D" stroke-width="1" visibility="hidden"/>`;
     // Ganancia del periodo = variación de valor − variación de lo aportado
     const first = pts[0];
-    const g = (last[1] - first[1]) - (last[2] - first[2]);
+    // En "Máx" es la ganancia total (igual que la cabecera): el primer día del historial es aproximado
+    const g = st.ui.period === 'Máx' ? last[1] - last[2] : (last[1] - first[1]) - (last[2] - first[2]);
     const dEl = document.getElementById('chart-delta');
     dEl.className = 'delta num ' + cls(g); dEl.textContent = `${sEur(g)} en ${st.ui.period === 'Máx' ? 'total' : st.ui.period}`;
     // Arrastrar para ver valores
