@@ -206,3 +206,11 @@ table.t tfoot td { font-weight: 800; border-bottom: none; }
 /* Sin aro de color en los fondos */
 .badge.has-logo.b-world, .badge.has-logo.b-em { box-shadow: none; }
 .badge.has-logo.local.b-world img, .badge.has-logo.local.b-em img { inset: 0; width: 100%; height: 100%; }
+
+/* Recuadro tocable (Último día) */
+.tile.tap { cursor: pointer; color: inherit; font: inherit; -webkit-tap-highlight-color: transparent; }
+.tile.tap:active { background: var(--line); }
+.tile.tap:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.tile .chev { font-style: normal; color: var(--muted2); margin-left: 2px; }
+.t.day td small { display: block; font-size: 11px; color: var(--muted2); font-weight: 500; margin-top: 1px; }
+.t.day td b { font-weight: 700; }

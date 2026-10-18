@@ -184,7 +184,7 @@
         </div>
       </section>
       <section class="tiles">
-        <div class="tile"><span class="l">Último día</span><span class="v num ${cls(S.day)}">${sEur(S.day)}</span><span class="s">VL ${dShort(S.navDate)}${lastStockDate(S) ? ' · acc. ' + dShort(lastStockDate(S)) : ''}</span></div>
+        <button class="tile tap" data-open="day" aria-label="Ver el desglose del último día"><span class="l">Último día <i class="chev" aria-hidden="true">›</i></span><span class="v num ${cls(S.day)}">${sEur(S.day)}</span><span class="s">VL ${dShort(S.navDate)}${lastStockDate(S) ? ' · acc. ' + dShort(lastStockDate(S)) : ''}</span></button>
         <div class="tile"><span class="l">Rentab. total</span><span class="v num ${cls(S.gainPct)}">${sPct(S.gainPct)}</span><span class="s">${xirrSub}</span></div>
         <div class="tile"><span class="l">Invertido</span><span class="v num">${eur(S.aportado, 0)}</span><span class="s">en mercado</span></div>
       </section>
@@ -514,6 +514,28 @@
       <p class="note">Lotes en orden FIFO: si vendes, Hacienda toma primero los más antiguos. Los traspasos entre fondos no tributan y conservan la fecha y el coste originales.</p>`);
   }
 
+  // Desglose de "Último día": de dónde sale la cifra, con la fecha de cada precio
+  function sheetDay() {
+    const S = C.summary(st.data, todayISO());
+    const pctOf = (day, value) => (value - day ? day / (value - day) : 0);
+    const rows = S.funds.map((p) => ({
+      n: p.asset.clase === 'world' ? 'World S' : p.asset.clase === 'em' ? 'Emergentes S' : p.asset.corto,
+      d: p.quote && p.quote.prevDate ? `VL ${dShort(p.quote.date)} frente al ${dShort(p.quote.prevDate)}` : `VL ${dShort(p.quote && p.quote.date)}`,
+      e: p.day, p: p.dayPct,
+    }));
+    if (S.stocks.length) {
+      const sd = S.stocks.reduce((a, p) => a + p.day, 0);
+      rows.push({ n: 'Acciones', d: `Cierre ${dShort(lastStockDate(S))} · ${S.stocks.length} posiciones`, e: sd, p: pctOf(sd, S.stocksValue) });
+    }
+    if (S.tr) rows.push({ n: 'Intereses TR', d: '1 día, neto', e: S.tr.perDayNet, p: null });
+    openSheet(`<h3 id="sheet-title">Último día</h3>
+      <div class="sub">Cuánto ha cambiado tu patrimonio con el último precio de cada cosa</div>
+      <table class="t day"><thead><tr><th>Parte</th><th>€</th><th>%</th></tr></thead>
+      <tbody>${rows.map((r) => `<tr><td><b>${esc(r.n)}</b><small>${esc(r.d)}</small></td><td class="num ${cls(r.e)}">${sEur(r.e)}</td><td class="num ${r.p == null ? 'muted' : cls(r.p)}">${r.p == null ? '—' : sPct(r.p)}</td></tr>`).join('')}</tbody>
+      <tfoot><tr><td>Total</td><td class="num ${cls(S.day)}">${sEur(S.day)}</td><td></td></tr></tfoot></table>
+      <p class="note">No es acumulado: cada día se sustituye por el siguiente. Los fondos solo tienen un precio al día y BlackRock lo publica con un día hábil de retraso, por eso sus fechas van por detrás de las acciones. El % de cada parte es sobre su propio valor.</p>`);
+  }
+
   function sheetStocks() {
     const S = C.summary(st.data, todayISO());
     const g = S.stocksValue - S.stocksAporta;
@@ -597,6 +619,7 @@
     if (t.dataset.reparto) { st.ui.reparto = t.dataset.reparto; save(LS.ui, st.ui); render(); return; }
     if (t.dataset.open === 'asset') return sheetAsset(t.dataset.id);
     if (t.dataset.open === 'stocks') return sheetStocks();
+    if (t.dataset.open === 'day') return sheetDay();
     if (t.dataset.open === 'tr') return sheetTR();
     if (t.dataset.open === 'ing') return sheetING();
     if (t.dataset.add) { sheetBody.innerHTML = formFor(t.dataset.add); return; }
