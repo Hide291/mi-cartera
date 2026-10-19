@@ -173,7 +173,7 @@
       <section class="total">
         <span class="label">Patrimonio total</span>
         <span class="big num">${eur(S.total)}</span>
-        <button class="gain tap" data-open="gain" aria-label="Ver el desglose de la ganancia"><span class="${cls(g)} num">${g >= 0 ? '▲' : '▼'} ${sEur(g)} · ${sPct(S.gainPct)}</span><small>en fondos y acciones <i class="chev" aria-hidden="true">›</i></small></button>
+        <button class="gain tap" data-open="gain" aria-label="Ver el desglose de la ganancia"><span class="${cls(g)} num">${g >= 0 ? '▲' : '▼'} ${sEur(g)} · ${sPct(S.gainPct)}</span><small>${S.stocks.length ? 'en fondos y acciones' : 'en tus fondos'} <i class="chev" aria-hidden="true">›</i></small></button>
       </section>
       <section class="chart" id="chart">
         <div class="scrub" id="scrub"></div>
@@ -369,8 +369,8 @@
       <div class="list">${S.funds.map((p) => `<button class="row" data-open="asset" data-id="${esc(p.asset.id)}">${badge(p.asset.id, p.asset.clase === 'world' ? 'b-world' : 'b-em', p.asset.clase === 'world' ? 'MW' : 'EM')}
         <span class="mid"><span class="t">${esc(p.asset.corto)}</span><span class="st">VL ${dShort(p.quote && p.quote.date)} · TER ${fmtNum(p.asset.ter, 2)} %</span></span>
         <span class="end"><b class="num">${fmtNum(p.price, 4)} €</b><span class="num ${cls(p.dayPct)}">${sPct(p.dayPct)}</span></span></button>`).join('')}</div>
-      <div class="group-h">Tus acciones</div>
-      <div class="list">${S.stocks.map((p) => stockRow(p)).join('')}</div>
+      ${S.stocks.length ? `<div class="group-h">Tus acciones</div>
+      <div class="list">${S.stocks.map((p) => stockRow(p)).join('')}</div>` : ''}
       <p class="note pad">Fondos: dato oficial de BlackRock, se publica con un día de retraso. Acciones e índices: Yahoo Finance, con hasta 15 min de retraso${live ? ' (consultado a las ' + esc(timeHM(live)) + ')' : ''}. Los índices MSCI se siguen a través de sus ETF (IWDA y EMIM).</p>`;
   }
 
@@ -392,7 +392,7 @@
     ev.sort((a, b) => (a.d < b.d ? 1 : a.d > b.d ? -1 : 0));
     const groups = {};
     ev.forEach((e) => { const m = e.d.slice(0, 7); (groups[m] = groups[m] || []).push(e); });
-    const label = { deposito: 'Ingreso', retirada: 'Retirada', bono: 'Bono', interes: 'Intereses cobrados', ajuste: 'Ajuste de saldo' };
+    const label = { deposito: 'Ingreso', retirada: 'Retirada', venta: 'Venta', bono: 'Bono', interes: 'Intereses cobrados', ajuste: 'Ajuste de saldo' };
     const rows = Object.keys(groups).map((m) => `<div class="group-h">${MESES[+m.slice(5, 7) - 1]} ${m.slice(0, 4)}</div><div class="list">` + groups[m].map((e) => {
       if (e.k === 'lot') {
         const a = A[e.l.activo] || { corto: e.l.activo, clase: '' };
@@ -400,7 +400,7 @@
         const tras = Number(e.l.aporta) === 0 && isFund;
         const t = isFund ? (tras ? 'Traspaso a ' : 'Aportación · ') + a.corto : 'Compra · ' + a.corto;
         return `<div class="row">${badge(e.l.activo, a.clase === 'world' ? 'b-world' : a.clase === 'em' ? 'b-em' : 'b-stk', a.clase === 'world' ? 'MW' : a.clase === 'em' ? 'EM' : String(a.corto).slice(0, 3).toUpperCase())}
-          <span class="mid"><span class="t">${esc(t)}</span><span class="st">${dShort(e.d)} · ${fmtNum(e.l.participaciones, isFund ? 2 : 6)} ${isFund ? 'part.' : 'acc.'}${e.l.hasta ? ' · traspasado el ' + dShort(C.addDays(e.l.hasta, 1)) : ''}</span></span>
+          <span class="mid"><span class="t">${esc(t)}</span><span class="st">${dShort(e.d)} · ${fmtNum(e.l.participaciones, isFund ? 2 : 6)} ${isFund ? 'part.' : 'acc.'}${e.l.hasta ? (isFund ? ' · traspasado el ' : ' · vendida el ') + dShort(C.addDays(e.l.hasta, 1)) : ''}</span></span>
           <span class="end"><b class="num">${eur(e.l.coste)}</b>${e.l.hasta ? '<span class="muted">cerrado</span>' : ''}</span></div>`;
       }
       if (e.k === 'est') return `<div class="row">${badge('TR', 'b-tr', 'TR')}<span class="mid"><span class="t">Intereses ${esc(e.p.periodo)} (estimado)</span><span class="st">${dShort(e.d)} · pendiente de confirmar</span></span><span class="end"><b class="num pos">${sEur(e.p.importe)}</b></span></div>`;
@@ -546,6 +546,7 @@
     const rows = S.funds.map((p) => row(p.asset.clase === 'world' ? 'World S' : p.asset.clase === 'em' ? 'Emergentes S' : p.asset.corto, 'sobre su coste fiscal', p.gain, p.gainPct)).join('')
       + row('Subtotal fondos', '', fGain, fCost ? fGain / fCost : 0, 'subt')
       + (S.stocks.length ? row('Acciones', 'sobre tu dinero (sin el bono)', sGain, S.stocksAporta ? sGain / S.stocksAporta : 0) : '')
+      + (Math.abs(S.stocksRealized) > 0.004 ? row('Acciones vendidas', 'resultado realizado sobre tu dinero (sin el bono)', S.stocksRealized, S.soldStockAporta ? S.stocksRealized / S.soldStockAporta : null) : '')
       + row('Total inversiones', 'la cifra de Inicio', S.gain, S.gainPct, 'subt')
       + (S.tr ? row('Intereses TR', 'netos, cobrados y devengados', trNet, null) : '');
     openSheet(`<h3 id="sheet-title">Ganancia total</h3>

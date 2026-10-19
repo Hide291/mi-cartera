@@ -40,6 +40,9 @@
     return ans;
   }
 
+  function salesUpTo(data, d) {
+    return data.cash.filter((c) => c.tipo === 'venta' && c.fecha <= d).reduce((s, c) => s + num(c.importe), 0);
+  }
   function isActive(lot, d) { return lot.desde <= d && (!lot.hasta || d <= lot.hasta); }
 
   function cfg(data, k, def) { const v = data.config && data.config[k]; return v === undefined || v === '' ? def : num(v); }
@@ -193,7 +196,12 @@
     const fundsValue = sum(funds, 'value'), stocksValue = sum(stocks, 'value');
     const investValue = fundsValue + stocksValue;
     // Aportado: dinero propio que entró en inversiones (incluye lotes ya traspasados; los traspasos internos aportan 0).
-    const aportado = data.lots.filter((l) => l.desde <= today).reduce((s, l) => s + num(l.aporta), 0);
+    // Las ventas (Efectivo tipo "venta") devuelven dinero: restan de lo aportado, así que un resultado realizado queda dentro de la ganancia.
+    const salesTotal = salesUpTo(data, today);
+    const aportado = data.lots.filter((l) => l.desde <= today).reduce((s, l) => s + num(l.aporta), 0) - salesTotal;
+    const assetById = Object.fromEntries(data.assets.map((a) => [a.id, a]));
+    const soldStockAporta = data.lots.filter((l) => l.hasta && l.hasta <= today && assetById[l.activo] && assetById[l.activo].tipo === 'accion').reduce((s, l) => s + num(l.aporta), 0);
+    const stocksRealized = salesTotal ? salesTotal - soldStockAporta : 0;
     const gain = investValue - aportado;
     const day = sum(pos, 'day') + (tr ? tr.perDayNet : 0);
 
@@ -215,6 +223,7 @@
     let xirrVal = null;
     if (firstDate && daysBetween(firstDate, today) >= 365) {
       const flows = data.lots.filter((l) => num(l.aporta) !== 0 && l.desde <= today).map((l) => [l.desde, -num(l.aporta)]);
+      data.cash.filter((c) => c.tipo === 'venta' && c.fecha <= today).forEach((c) => flows.push([c.fecha, num(c.importe)]));
       flows.push([today, investValue]);
       xirrVal = xirr(flows);
     }
@@ -229,6 +238,7 @@
       emWeight: em && fundsValue ? em.value / fundsValue : null,
       firstDate, xirr: xirrVal,
       stocksAporta: sum(stocks, 'aporta'), stocksCost: sum(stocks, 'cost'),
+      salesTotal, stocksRealized, soldStockAporta,
     };
   }
 
@@ -249,6 +259,7 @@
         if (p == null) p = num(l.participaciones) ? num(l.coste) / num(l.participaciones) : 0; // sin precio aún: al coste
         value += num(l.participaciones) * p;
       }
+      aportado -= salesUpTo(data, d);
       if (ok) out.push([d, value, aportado]);
     }
     // Último punto con precios actuales (incluye cotización en vivo de acciones)
