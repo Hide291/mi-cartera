@@ -295,6 +295,21 @@
     return out;
   }
 
+  // Reparte una aportación nueva entre World y EM para acercarse al objetivo sin vender nada.
+  // Si la aportación no basta para llegar, va entera al fondo infraponderado. Importes a euros enteros.
+  function splitContribution(worldValue, emValue, target, amount) {
+    const total = worldValue + emValue + amount;
+    let toWorld = Math.round(target * total - worldValue);
+    toWorld = Math.min(Math.max(toWorld, 0), Math.round(amount * 100) / 100);
+    const toEM = Math.round((amount - toWorld) * 100) / 100;
+    const w = worldValue + toWorld, e = emValue + toEM;
+    // Cuánto haría falta para llegar exactamente al objetivo (0 si ya se llega con esta aportación)
+    const need = worldValue / (worldValue + emValue) < target
+      ? Math.max(0, (target * (worldValue + emValue) - worldValue) / (1 - target))
+      : Math.max(0, ((1 - target) * (worldValue + emValue) - emValue) / target);
+    return { toWorld, toEM, weightAfter: w + e ? w / (w + e) : null, need, reaches: amount >= need - 0.5 };
+  }
+
   function stockMovers(sum) {
     const st = sum.stocks.filter((p) => p.quote && p.quote.prev).map((p) => ({ asset: p.asset, pct: p.dayPct }));
     if (!st.length) return null;
@@ -302,5 +317,5 @@
     return { best: st[0], worst: st[st.length - 1] };
   }
 
-  return { round2, addDays, daysBetween, valueAt, isActive, quote, positions, trInterest, summary, history, xirr, markets, stockMovers, cashBalance, firstOfNextMonth };
+  return { round2, addDays, daysBetween, valueAt, isActive, quote, positions, trInterest, summary, history, xirr, markets, stockMovers, splitContribution, cashBalance, firstOfNextMonth };
 });

@@ -221,3 +221,10 @@ table.t tfoot td { font-weight: 800; border-bottom: none; }
 .total .gain.tap:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .total .gain .chev { font-style: normal; color: var(--muted2); margin-left: 2px; }
 .t.day tr.subt td { font-weight: 700; color: var(--text, inherit); background: rgba(255,255,255,.03); }
+
+/* v28: aviso de reparto como botón y calculadora de aportación */
+button.hint { display: block; width: 100%; text-align: left; border: 0; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.hint-cta { display: block; margin-top: 4px; font-size: 12px; font-weight: 700; opacity: .85; }
+.kv.calc { font-size: 17px; gap: 12px; margin-top: 14px; }
+.kv.calc dt { color: var(--text); display: flex; align-items: center; gap: 8px; font-weight: 600; }
+.kv .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }

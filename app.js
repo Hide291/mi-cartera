@@ -257,8 +257,8 @@
         <div><span class="n"><i style="background:var(--accent)"></i>World S</span><span class="p num">${pct(S.worldWeight, 1)}</span><span class="d num">${eur(S.world.value, 0)} · obj. ${pct(S.target, 0)}</span></div>
         <div><span class="n"><i style="background:var(--em)"></i>Emergentes S</span><span class="p num">${pct(S.emWeight, 1)}</span><span class="d num">${eur(S.em.value, 0)} · obj. ${pct(1 - S.target, 0)}</span></div></div>`;
       const r = S.rebalance;
-      if (r && r.amount > 1) hint = `<div class="hint">Aporta ~${eur(Math.ceil(r.amount), 0)} al ${r.to.clase === 'world' ? 'World' : 'Emergentes'} para volver al ${Math.round(S.target * 100)}/${Math.round((1 - S.target) * 100)}</div>`;
-      else hint = `<div class="hint ok">Reparto en objetivo</div>`;
+      if (r && r.amount > 1) hint = `<button class="hint tap" data-open="calc">Aporta ~${eur(Math.ceil(r.amount), 0)} al ${r.to.clase === 'world' ? 'World' : 'Emergentes'} para volver al ${Math.round(S.target * 100)}/${Math.round((1 - S.target) * 100)}<span class="hint-cta">¿Cuánto vas a aportar? Calcular <i class="chev" aria-hidden="true">›</i></span></button>`;
+      else hint = `<button class="hint ok tap" data-open="calc">Reparto en objetivo<span class="hint-cta">Repartir una aportación <i class="chev" aria-hidden="true">›</i></span></button>`;
     } else {
       const T = S.total || 1;
       const parts = [['World S', S.world ? S.world.value : 0, 'var(--accent)'], ['Emergentes S', S.em ? S.em.value : 0, 'var(--em)'], ['Acciones', S.stocksValue, 'var(--stocks)'], ['Trade Republic', S.trBalance, 'var(--tr)'], ['ING', S.ingBalance, 'var(--ing)']].filter((x) => x[1] > 0);
@@ -598,10 +598,44 @@
       </form>`);
   }
 
+  // ---------- Calculadora de aportación
+  function sheetCalc() {
+    const S = C.summary(st.data, todayISO());
+    if (!S.world || !S.em) return toast('Faltan datos de los fondos');
+    const tw = Math.round(S.target * 100), te = 100 - tw;
+    const last = st.ui.calcAmount || '';
+    openSheet(`<h3 id="sheet-title">Reparto de una aportación</h3>
+      <div class="sub">Objetivo ${tw}/${te} · ahora ${pct(S.worldWeight, 1)} / ${pct(S.emWeight, 1)} · VL ${dShort(S.navDate)}</div>
+      <form class="form" data-form="calc"><label>¿Cuánto vas a aportar? (€)<input id="calc-amt" name="importe" type="number" inputmode="decimal" step="1" min="1" value="${esc(String(last))}" placeholder="Ej.: 300"></label></form>
+      <div id="calc-out"></div>
+      <p class="note">Reparte solo dinero nuevo, sin vender nada: pone en cada fondo lo necesario para acercarte al ${tw}/${te}. Si la cantidad no basta para llegar, va entera al fondo que va por detrás. Usa el último valor liquidativo (1 día hábil de retraso), así que el resultado real puede moverse unas décimas. Si hay un traspaso pendiente de registrar, el cálculo aún no lo tiene en cuenta.</p>`);
+    renderCalc();
+  }
+  function renderCalc() {
+    const out = document.getElementById('calc-out'), inp = document.getElementById('calc-amt');
+    if (!out || !inp) return;
+    const amount = numIn(inp.value);
+    if (!(amount > 0)) { out.innerHTML = ''; return; }
+    st.ui.calcAmount = amount; save(LS.ui, st.ui);
+    const S = C.summary(st.data, todayISO());
+    const r = C.splitContribution(S.world.value, S.em.value, S.target, amount);
+    const tw = Math.round(S.target * 100), te = 100 - tw;
+    const msg = r.reaches
+      ? `Con esta aportación quedas en ${pct(r.weightAfter, 1)} / ${pct(1 - r.weightAfter, 1)}, en tu objetivo.`
+      : `No basta para llegar al ${tw}/${te}: quedas en ${pct(r.weightAfter, 1)} / ${pct(1 - r.weightAfter, 1)}. Faltarían ~${eur(Math.ceil(r.need - amount), 0)} más.`;
+    out.innerHTML = `<dl class="kv calc">
+        <dt><i class="dot" style="background:var(--accent)"></i>World S</dt><dd class="num">${eur(r.toWorld)}</dd>
+        <dt><i class="dot" style="background:var(--em)"></i>Emergentes S</dt><dd class="num">${eur(r.toEM)}</dd>
+      </dl>
+      <div class="hint ${r.reaches ? 'ok' : ''}">${esc(msg)}</div>`;
+  }
+  document.addEventListener('input', (e) => { if (e.target && e.target.id === 'calc-amt') renderCalc(); });
+
   // ---------- Añadir operación
   function sheetAdd() {
     openSheet(`<h3 id="sheet-title">Añadir operación</h3><div class="sub">También puedes mandarle la captura a Claude y lo registra por ti.</div>
       <div class="choice">
+        <button data-open="calc"><b>Calcular el reparto de una aportación</b><span>Cuánto poner en cada fondo para acercarte al objetivo</span></button>
         <button data-add="fondo"><b>Aportación a un fondo</b><span>MyInvestor · World S o Emergentes S</span></button>
         <button data-add="accion"><b>Compra de acciones</b><span>Trade Republic · descuenta el importe del efectivo</span></button>
         <button data-add="efectivo"><b>Movimiento de efectivo</b><span>Ingreso, retirada o cobro de intereses en TR o ING</span></button>
@@ -642,6 +676,7 @@
     if (t.dataset.open === 'stocks') return sheetStocks();
     if (t.dataset.open === 'day') return sheetDay();
     if (t.dataset.open === 'gain') return sheetGain();
+    if (t.dataset.open === 'calc') return sheetCalc();
     if (t.dataset.open === 'tr') return sheetTR();
     if (t.dataset.open === 'ing') return sheetING();
     if (t.dataset.add) { sheetBody.innerHTML = formFor(t.dataset.add); return; }
@@ -672,6 +707,7 @@
     const btn = f.querySelector('[type=submit]'); if (btn) btn.disabled = true;
     const done = () => { if (btn) btn.disabled = false; };
     const kind = f.dataset.form;
+    if (kind === 'calc') { done(); renderCalc(); const i = document.getElementById('calc-amt'); if (i) i.blur(); return; }
     try {
       if (kind === 'conn') {
         st.conn = { url: fd.url.trim(), key: fd.key.trim() }; save(LS.conn, st.conn); render(); await refresh(false);
