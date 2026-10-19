@@ -186,7 +186,7 @@
       <section class="tiles">
         <button class="tile tap" data-open="day" aria-label="Ver el desglose del último día"><span class="l">Último día <i class="chev" aria-hidden="true">›</i></span><span class="v num ${cls(S.day)}">${sEur(S.day)}</span><span class="s">VL ${dShort(S.navDate)}${lastStockDate(S) ? ' · acc. ' + dShort(lastStockDate(S)) : ''}</span></button>
         <div class="tile"><span class="l">Rentab. total</span><span class="v num ${cls(S.gainPct)}">${sPct(S.gainPct)}</span><span class="s">${xirrSub}</span></div>
-        <div class="tile"><span class="l">Invertido</span><span class="v num">${eur(S.aportado, 0)}</span><span class="s">en mercado</span></div>
+        <div class="tile"><span class="l">Invertido</span><span class="v num">${eur(S.aportado, 0)}</span><span class="s">${S.salesTotal ? 'neto de ventas' : 'en mercado'}</span></div>
       </section>
       ${renderReparto(S)}
       <div class="section-h"><h2>Posiciones</h2><span class="aside">${st.at ? 'act. ' + esc(timeHM(st.at)) : ''}</span></div>
