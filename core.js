@@ -295,6 +295,28 @@
     return out;
   }
 
+  // Resumen de aportaciones: dinero propio nuevo por mes (los traspasos y bonos aportan 0 y no cuentan).
+  function contributions(data, today) {
+    const assets = Object.fromEntries(data.assets.map((a) => [a.id, a]));
+    const months = {};
+    const row = (ym) => (months[ym] = months[ym] || { ym, fondos: 0, acciones: 0, ventas: 0, n: 0 });
+    for (const l of data.lots) {
+      const a = num(l.aporta);
+      if (!a || l.desde > today) continue;
+      const r = row(l.desde.slice(0, 7));
+      if (assets[l.activo] && assets[l.activo].tipo === 'accion') r.acciones += a; else r.fondos += a;
+      r.n++;
+    }
+    for (const c of data.cash) if (c.tipo === 'venta' && c.fecha <= today) row(c.fecha.slice(0, 7)).ventas += num(c.importe);
+    const list = Object.values(months).map((m) => ({ ...m, neto: round2(m.fondos + m.acciones - m.ventas) })).sort((x, y) => (x.ym < y.ym ? 1 : -1));
+    const years = {};
+    for (const m of list) { const y = m.ym.slice(0, 4); years[y] = round2((years[y] || 0) + m.neto); }
+    const total = round2(list.reduce((s, m) => s + m.neto, 0));
+    const first = list.length ? list[list.length - 1].ym : null;
+    const nMonths = first ? (+today.slice(0, 4) - +first.slice(0, 4)) * 12 + (+today.slice(5, 7) - +first.slice(5, 7)) + 1 : 0;
+    return { months: list, years, total, first, nMonths, avgMonthly: nMonths ? round2(total / nMonths) : 0, thisYear: years[today.slice(0, 4)] || 0 };
+  }
+
   // Reparte una aportación nueva entre World y EM para acercarse al objetivo sin vender nada.
   // Si la aportación no basta para llegar, va entera al fondo infraponderado. Importes a euros enteros.
   function splitContribution(worldValue, emValue, target, amount) {
@@ -317,5 +339,5 @@
     return { best: st[0], worst: st[st.length - 1] };
   }
 
-  return { round2, addDays, daysBetween, valueAt, isActive, quote, positions, trInterest, summary, history, xirr, markets, stockMovers, splitContribution, cashBalance, firstOfNextMonth };
+  return { round2, addDays, daysBetween, valueAt, isActive, quote, positions, trInterest, summary, history, xirr, markets, stockMovers, splitContribution, contributions, cashBalance, firstOfNextMonth };
 });

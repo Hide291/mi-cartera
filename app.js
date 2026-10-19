@@ -43,6 +43,7 @@
   const pct = (x, dec = 2) => (x == null || !isFinite(x) ? '—' : fmtNum(x * 100, dec) + ' %');
   const sPct = (x, dec = 2) => (x == null || !isFinite(x) ? '—' : (x > 0 ? '+' : '') + pct(x, dec));
   const cls = (x) => (x > 0.000001 ? 'pos' : x < -0.000001 ? 'neg' : 'muted');
+  const round2 = (x) => Math.round(x * 100) / 100;
   const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
   const dShort = (s) => (s ? `${+s.slice(8, 10)}/${+s.slice(5, 7)}` : '—');
   const dLong = (s) => (s ? `${+s.slice(8, 10)} ${MESES[+s.slice(5, 7) - 1]} ${s.slice(0, 4)}` : '—');
@@ -186,7 +187,7 @@
       <section class="tiles">
         <button class="tile tap" data-open="day" aria-label="Ver el desglose del último día"><span class="l">Último día <i class="chev" aria-hidden="true">›</i></span><span class="v num ${cls(S.day)}">${sEur(S.day)}</span><span class="s">VL ${dShort(S.navDate)}${lastStockDate(S) ? ' · acc. ' + dShort(lastStockDate(S)) : ''}</span></button>
         <div class="tile"><span class="l">Rentab. total</span><span class="v num ${cls(S.gainPct)}">${sPct(S.gainPct)}</span><span class="s">${xirrSub}</span></div>
-        <div class="tile"><span class="l">Invertido</span><span class="v num">${eur(S.aportado, 0)}</span><span class="s">${S.salesTotal ? 'neto de ventas' : 'en mercado'}</span></div>
+        <button class="tile tap" data-open="contrib" aria-label="Ver tus aportaciones"><span class="l">Invertido <i class="chev" aria-hidden="true">›</i></span><span class="v num">${eur(S.aportado, 0)}</span><span class="s">${S.salesTotal ? 'neto de ventas' : 'en mercado'}</span></button>
       </section>
       ${renderReparto(S)}
       <div class="section-h"><h2>Posiciones</h2><span class="aside">${st.at ? 'act. ' + esc(timeHM(st.at)) : ''}</span></div>
@@ -598,6 +599,29 @@
       </form>`);
   }
 
+  // ---------- Resumen de aportaciones
+  function sheetContrib() {
+    const today = todayISO();
+    const R = C.contributions(st.data, today);
+    const mName = (ym) => `${MESES[+ym.slice(5, 7) - 1]} ${ym.slice(0, 4)}`;
+    const anyStocks = R.months.some((m) => m.acciones || m.ventas);
+    let body = '', curY = null;
+    for (const m of R.months) {
+      const y = m.ym.slice(0, 4);
+      if (y !== curY) { curY = y; body += `<tr class="subt"><td><b>${y}</b></td>${anyStocks ? '<td></td><td></td>' : ''}<td class="num"><b>${eur(R.years[y])}</b></td></tr>`; }
+      body += `<tr><td>${mName(m.ym)}<small>${m.n} ${m.n === 1 ? 'aportación' : 'aportaciones'}</small></td>${anyStocks ? `<td class="num">${eur(m.fondos)}</td><td class="num">${m.acciones || m.ventas ? sEur(round2(m.acciones - m.ventas)) : '—'}</td>` : ''}<td class="num">${eur(m.neto)}</td></tr>`;
+    }
+    openSheet(`<h3 id="sheet-title">Tus aportaciones</h3>
+      <div class="sub">Dinero propio nuevo, mes a mes${R.first ? ' desde ' + mName(R.first) : ''}</div>
+      <dl class="kv">
+        <dt>Total aportado (neto)</dt><dd class="num">${eur(R.total)}</dd>
+        <dt>Este año</dt><dd class="num">${eur(R.thisYear)}</dd>
+        <dt>Media mensual</dt><dd class="num">${eur(R.avgMonthly)}</dd>
+      </dl>
+      <table class="t day"><thead><tr><th>Mes</th>${anyStocks ? '<th>Fondos</th><th>Acciones</th>' : ''}<th>Total</th></tr></thead><tbody>${body}</tbody></table>
+      <p class="note">Solo cuenta dinero nuevo: los traspasos entre fondos y el bono de TR no son aportaciones. La media mensual reparte el total entre los ${R.nMonths} meses desde la primera aportación (incluido el actual), así que los meses sin aportar la bajan. ${anyStocks ? 'En «Acciones», las ventas restan (importe neto cobrado). ' : ''}Los intereses de TR no cuentan: son rendimiento, no aportación.</p>`);
+  }
+
   // ---------- Calculadora de aportación
   function sheetCalc() {
     const S = C.summary(st.data, todayISO());
@@ -677,6 +701,7 @@
     if (t.dataset.open === 'day') return sheetDay();
     if (t.dataset.open === 'gain') return sheetGain();
     if (t.dataset.open === 'calc') return sheetCalc();
+    if (t.dataset.open === 'contrib') return sheetContrib();
     if (t.dataset.open === 'tr') return sheetTR();
     if (t.dataset.open === 'ing') return sheetING();
     if (t.dataset.add) { sheetBody.innerHTML = formFor(t.dataset.add); return; }
