@@ -228,3 +228,17 @@ button.hint { display: block; width: 100%; text-align: left; border: 0; font: in
 .kv.calc { font-size: 17px; gap: 12px; margin-top: 14px; }
 .kv.calc dt { color: var(--text); display: flex; align-items: center; gap: 8px; font-weight: 600; }
 .kv .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+
+/* Controles propios de formulario (v30): píldoras y selector de fecha */
+.form .field { display: flex; flex-direction: column; gap: 6px; }
+.form .flabel { font-size: 13px; color: var(--muted); font-weight: 600; }
+.pills { display: flex; flex-wrap: wrap; gap: 6px; background: var(--card2); border-radius: 14px; padding: 4px; }
+.pills button { flex: 1 1 auto; min-height: 40px; padding: 0 14px; border: none; border-radius: 11px; background: transparent; color: var(--muted); font-size: 14px; font-weight: 600; -webkit-tap-highlight-color: transparent; }
+.pills button[aria-checked="true"] { background: #1F262B; color: var(--text); font-weight: 700; box-shadow: inset 0 0 0 1px var(--line); }
+.pills button:focus-visible, .dstep button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.datepick { display: flex; flex-wrap: wrap; gap: 8px; align-items: stretch; }
+.datepick .pills { flex: 0 0 auto; }
+.dstep { flex: 1 1 210px; display: flex; align-items: center; justify-content: space-between; background: var(--card); border: 1px solid var(--line); border-radius: 12px; min-height: 48px; }
+.dstep button { width: 44px; height: 46px; border: none; background: transparent; color: var(--text); font-size: 24px; font-weight: 600; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; }
+.dstep button:disabled { color: var(--line); }
+.dstep .dval { font-size: 15px; font-weight: 700; color: var(--text); text-align: center; flex: 1; white-space: nowrap; }

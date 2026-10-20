@@ -74,6 +74,7 @@ Registro de por qué la app está hecha como está, qué se descartó y qué pro
 - Cada cifra real lleva su fecha («VL 16/10»); lo que no tiene fecha es un cálculo. Así se distingue a simple vista un dato de una estimación.
 - Las cifras de cabecera se pueden tocar para ver su desglose («Último día», «Ganancia total», «Invertido») en lugar de llenar la portada de tarjetas fijas.
 - Si no hay acciones, la app oculta todo lo relativo a ellas.
+- **Sin controles del sistema en los formularios (v30).** Los `<select>` y los `<input type="date">` abren selectores que dibuja Android (estilo Material, claro) y que la web no puede estilizar. Se sustituyeron por botones tipo píldora (fondo, acción, cuenta, tipo) y por un selector de fecha propio: «Hoy», «Ayer» y flechas ‹ › (mantener pulsado avanza cada vez más rápido; no deja elegir fechas futuras). Los valores viajan en `<input type="hidden">`, así que el envío de los formularios no cambió. Los campos numéricos siguen usando el teclado del sistema, que es lo correcto.
 - El propietario prefiere una app sencilla. Se descartaron: copia de seguridad automática, indicador de fondo de emergencia, tarjeta de próximos eventos, proyección a largo plazo y objetivo de patrimonio.
 
 ## 7. Cómo se prueba
@@ -101,3 +102,4 @@ Registro de por qué la app está hecha como está, qué se descartó y qué pro
 | v27 | «Invertido» indica «neto de ventas» |
 | v28 | Calculadora de aportación |
 | v29 | Resumen de aportaciones por mes y año |
+| v30 | Formularios sin selectores del sistema: píldoras y selector de fecha propio |

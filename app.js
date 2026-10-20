@@ -665,34 +665,71 @@
         <button data-add="efectivo"><b>Movimiento de efectivo</b><span>Ingreso, retirada o cobro de intereses en TR o ING</span></button>
       </div>`);
   }
+  // Controles propios (sin selectores del sistema, que Android dibuja con su propio estilo)
+  function pills(name, label, options, selected) {
+    const sel = selected != null ? selected : (options[0] && options[0][0]);
+    return `<div class="field"><span class="flabel">${esc(label)}</span>
+      <div class="pills" role="radiogroup" aria-label="${esc(label)}">${options.map(([v, l]) => `<button type="button" role="radio" data-pill="${esc(name)}" data-val="${esc(v)}" aria-checked="${v === sel}">${esc(l)}</button>`).join('')}</div>
+      <input type="hidden" name="${esc(name)}" value="${esc(sel || '')}"></div>`;
+  }
+  function datePicker(name, value) {
+    return `<div class="field" data-date="${esc(name)}"><span class="flabel">Fecha</span>
+      <div class="datepick">
+        <div class="pills"><button type="button" data-dquick="0">Hoy</button><button type="button" data-dquick="-1">Ayer</button></div>
+        <div class="dstep"><button type="button" data-dstep="-1" aria-label="Día anterior">‹</button><span class="dval num"></span><button type="button" data-dstep="1" aria-label="Día siguiente">›</button></div>
+      </div>
+      <input type="hidden" name="${esc(name)}" value="${esc(value)}"></div>`;
+  }
+  const DIAS = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
+  function paintDate(field) {
+    const inp = field.querySelector('input[type=hidden]'), v = inp.value, today = todayISO();
+    const wd = DIAS[new Date(v + 'T12:00:00Z').getUTCDay()];
+    field.querySelector('.dval').textContent = `${wd} ${dLong(v)}`;
+    field.querySelectorAll('[data-dquick]').forEach((b) => b.setAttribute('aria-checked', String(C.addDays(today, +b.dataset.dquick) === v)));
+    field.querySelector('[data-dstep="1"]').disabled = v >= today;
+  }
+  function setDate(field, v) { const today = todayISO(); if (v > today) v = today; field.querySelector('input[type=hidden]').value = v; paintDate(field); }
+  function paintForm() { sheetBody.querySelectorAll('[data-date]').forEach(paintDate); }
+
   function formFor(kind) {
     const today = todayISO();
     const funds = st.data.assets.filter((a) => a.tipo === 'fondo');
     const stocks = st.data.assets.filter((a) => a.tipo === 'accion');
-    const opts = (arr) => arr.map((a) => `<option value="${esc(a.id)}">${esc(a.corto)}</option>`).join('');
+    const amt = (label, name, step, min, req) => `<label>${label}<input name="${name}" type="number" inputmode="decimal" step="${step}" min="${min}"${req ? ' required' : ''}></label>`;
     if (kind === 'fondo') return `<h3 id="sheet-title">Aportación a un fondo</h3><form class="form" data-form="add-fondo">
-      <label>Fondo<select name="activo">${opts(funds)}</select></label>
-      <div class="two"><label>Fecha<input name="fecha" type="date" required value="${today}"></label><label>Importe (€)<input name="importe" type="number" inputmode="decimal" step="0.01" min="0.01" required></label></div>
-      <label>Participaciones (si aún no las sabes, déjalo vacío y se estiman con el último VL)<input name="part" type="number" inputmode="decimal" step="0.000001" min="0"></label>
+      ${pills('activo', 'Fondo', funds.map((a) => [a.id, a.corto]))}
+      ${datePicker('fecha', today)}
+      ${amt('Importe (€)', 'importe', '0.01', '0.01', true)}
+      ${amt('Participaciones (si aún no las sabes, déjalo vacío y se estiman con el último VL)', 'part', '0.000001', '0', false)}
       <button class="btn" type="submit">Guardar aportación</button></form>`;
     if (kind === 'accion') return `<h3 id="sheet-title">Compra de acciones</h3><form class="form" data-form="add-accion">
-      <label>Acción<select name="activo">${opts(stocks)}</select></label>
-      <div class="two"><label>Fecha<input name="fecha" type="date" required value="${today}"></label><label>Importe total con comisión (€)<input name="importe" type="number" inputmode="decimal" step="0.01" min="0.01" required></label></div>
-      <label>Unidades<input name="part" type="number" inputmode="decimal" step="0.000001" min="0.000001" required></label>
-      <button class="btn" type="submit">Guardar compra</button></form>`;
+      ${stocks.length ? pills('activo', 'Acción', stocks.map((a) => [a.id, a.corto])) : '<p class="note">No hay acciones dadas de alta. Pídele a Claude que añada la acción antes de registrar la compra.</p>'}
+      ${datePicker('fecha', today)}
+      ${amt('Importe total con comisión (€)', 'importe', '0.01', '0.01', true)}
+      ${amt('Unidades', 'part', '0.000001', '0.000001', true)}
+      <button class="btn" type="submit"${stocks.length ? '' : ' disabled'}>Guardar compra</button></form>`;
     return `<h3 id="sheet-title">Movimiento de efectivo</h3><form class="form" data-form="add-efectivo">
-      <div class="two"><label>Cuenta<select name="cuenta"><option value="TR">Trade Republic</option><option value="ING">ING Nómina</option></select></label>
-      <label>Tipo<select name="tipo"><option value="deposito">Ingreso</option><option value="retirada">Retirada</option><option value="interes">Intereses cobrados (neto)</option></select></label></div>
-      <div class="two"><label>Fecha<input name="fecha" type="date" required value="${today}"></label><label>Importe (€)<input name="importe" type="number" inputmode="decimal" step="0.01" min="0.01" required></label></div>
+      ${pills('cuenta', 'Cuenta', [['TR', 'Trade Republic'], ['ING', 'ING Nómina']])}
+      ${pills('tipo', 'Tipo', [['deposito', 'Ingreso'], ['retirada', 'Retirada'], ['interes', 'Intereses']])}
+      ${datePicker('fecha', today)}
+      ${amt('Importe (€, en intereses el neto cobrado)', 'importe', '0.01', '0.01', true)}
       <label>Nota (opcional)<input name="nota" type="text" maxlength="80"></label>
       <button class="btn" type="submit">Guardar movimiento</button></form>`;
   }
+
 
   // ---------------------------------------------------------------- eventos
   document.addEventListener('click', (e) => {
     const t = e.target.closest('button, [data-close]');
     if (!t) return;
     if (t.hasAttribute('data-close')) return closeSheet();
+    if (t.dataset.pill) {
+      const g = t.closest('.field');
+      g.querySelectorAll('[data-pill]').forEach((b) => b.setAttribute('aria-checked', String(b === t)));
+      g.querySelector('input[type=hidden]').value = t.dataset.val; return;
+    }
+    if (t.dataset.dquick != null) { const f = t.closest('[data-date]'); setDate(f, C.addDays(todayISO(), +t.dataset.dquick)); return; }
+    if (t.dataset.dstep != null) return; // se gestiona con pointerdown (permite mantener pulsado)
     if (t.dataset.tab) { st.tab = t.dataset.tab; window.scrollTo(0, 0); render(); return; }
     if (t.dataset.period) { st.ui.period = t.dataset.period; save(LS.ui, st.ui); render(); return; }
     if (t.dataset.reparto) { st.ui.reparto = t.dataset.reparto; save(LS.ui, st.ui); render(); return; }
@@ -704,7 +741,7 @@
     if (t.dataset.open === 'contrib') return sheetContrib();
     if (t.dataset.open === 'tr') return sheetTR();
     if (t.dataset.open === 'ing') return sheetING();
-    if (t.dataset.add) { sheetBody.innerHTML = formFor(t.dataset.add); return; }
+    if (t.dataset.add) { sheetBody.innerHTML = formFor(t.dataset.add); paintForm(); return; }
     const act = t.dataset.act;
     if (act === 'refresh') return refresh(false);
     if (act === 'force') { toast('Descargando precios…'); return refresh(true); }
@@ -778,6 +815,25 @@
       }
     } finally { done(); }
   });
+
+  // Flechas de fecha: un toque = un día; mantener pulsado = avanza cada vez más rápido
+  (function dateRepeat() {
+    let timer = null, n = 0;
+    const stop = () => { clearTimeout(timer); timer = null; };
+    document.addEventListener('pointerdown', (e) => {
+      const b = e.target.closest('[data-dstep]'); if (!b || b.disabled) return;
+      e.preventDefault();
+      const f = b.closest('[data-date]'), dir = +b.dataset.dstep; n = 0;
+      const step = () => {
+        const inp = f.querySelector('input[type=hidden]');
+        setDate(f, C.addDays(inp.value, dir)); n++;
+        if (b.disabled) return stop();
+        timer = setTimeout(step, n === 1 ? 450 : n < 8 ? 140 : 60);
+      };
+      step();
+    });
+    ['pointerup', 'pointercancel', 'pointerleave'].forEach((ev) => document.addEventListener(ev, stop));
+  })();
 
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !sheet.hidden) closeSheet(); });
 
