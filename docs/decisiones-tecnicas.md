@@ -25,7 +25,8 @@ Registro de por qué la app está hecha como está, qué se descartó y qué pro
 
 ## 2. Backend (Apps Script)
 
-- **API**: `GET ?action=data&key=…` devuelve todo (config, activos, lotes, efectivo, precios, cotizaciones en vivo). `POST` con `upsert`, `delete`, `setConfig` y `refresh`. La clave se compara en el servidor; `apiKey` no se puede cambiar por la API.
+- **API**: `GET ?action=data&key=…` devuelve todo (config, activos, lotes, efectivo, precios, cotizaciones en vivo). `POST` con `upsert`, `delete`, `setConfig` y `refresh`. La clave se compara en el servidor (en tiempo constante); `apiKey` no se puede cambiar por la API.
+- **Claves con permisos**: se guardan en las propiedades del script, nunca en el código. `apiKey` (escribir; si falta se toma de la pestaña Config), `apiKeyNext` (escribir; para que una clave nueva conviva con la anterior durante una rotación) y `apiKeyRead` (solo leer: `GET ?action=data`). Las claves de escritura también leen; `refresh` y todo `POST` exigen escritura (`Permiso insuficiente` si no). Los accesos rechazados se anotan en el registro, sin la clave y como mucho una vez por minuto.
 - **POST con `Content-Type: text/plain`**: Apps Script no responde a las peticiones previas CORS (preflight). Enviar el JSON como texto plano evita el preflight y funciona desde el navegador.
 - **Redirecciones**: la URL `/exec` responde con una redirección a `googleusercontent.com`. Con curl hay que usar `-L`. A veces el primer intento devuelve una página HTML "Page Not Found": se reintenta. Un `upsert` con `id` existente es idempotente; uno **sin** `id` crearía duplicados, así que hay que comprobar con un GET antes de reintentar.
 - **Escrituras con `LockService`** para que dos escrituras simultáneas no se pisen. `sanitize_` limita cada fila a las columnas conocidas de su tabla.
