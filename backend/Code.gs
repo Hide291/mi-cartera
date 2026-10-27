@@ -7,7 +7,7 @@
  * Funciones:
  *   setup()       → crea las pestañas, genera la clave secreta y programa la actualización automática.
  *   actualizar()  → descarga el valor liquidativo de los fondos (BlackRock) y los cierres de las cotizaciones.
- *   doGet / doPost → API JSON protegida con la clave (lectura para la app, escritura para la app y para Claude).
+ *   doGet / doPost → API JSON protegida con clave. Hay claves con permiso de lectura o de escritura (ver checkKey_).
  *
  * Este archivo no contiene datos personales: los datos viven solo en la hoja.
  */
@@ -55,7 +55,7 @@ function setup() {
   });
   ScriptApp.newTrigger('actualizar').timeBased().everyHours(6).create();
   log_('Instalación completada');
-  Logger.log('CLAVE SECRETA (está también en la pestaña Config): ' + cfg.apiKey);
+  Logger.log('Instalación completada. La clave principal está en la pestaña Config (no se escribe aquí).');
 }
 
 // ---------------------------------------------------------------- API
@@ -64,7 +64,7 @@ function doGet(e) {
   var p = (e && e.parameter) || {};
   try {
     if (p.action === 'ping') return json_({ ok: true, app: 'mi-cartera' });
-    checkKey_(p.key);
+    checkKey_(p.key, p.action === 'refresh' ? 'escribir' : 'leer');
     if (p.action === 'refresh') { actualizar(); CacheService.getScriptCache().remove('live'); }
     return json_(buildData_());
   } catch (err) {
@@ -75,7 +75,7 @@ function doGet(e) {
 function doPost(e) {
   try {
     var body = JSON.parse((e && e.postData && e.postData.contents) || '{}');
-    checkKey_(body.key);
+    checkKey_(body.key, 'escribir');
     var lock = LockService.getScriptLock();
     lock.waitLock(20000);
     try {
@@ -356,11 +356,48 @@ function writeConfig_(cfg) {
   if (rows.length) { var rg = sh.getRange(2, 1, rows.length, 2); rg.setNumberFormat('@'); rg.setValues(rows); }
 }
 
-function checkKey_(key) {
+// Claves admitidas (propiedades del script, nunca en el código):
+//   apiKey      → escribir (clave principal; si falta se toma de la pestaña Config)
+//   apiKeyNext  → escribir (clave nueva que convive con la anterior durante una rotación)
+//   apiKeyRead  → leer (solo GET de datos; para las tareas programadas)
+// Una clave de escritura también sirve para leer. Las claves de menos de 20 caracteres se ignoran.
+function keyTable_() {
   var props = PropertiesService.getScriptProperties();
-  var real = props.getProperty('apiKey');
-  if (!real) { real = String(readConfig_().apiKey || ''); if (real) props.setProperty('apiKey', real); }
-  if (!real || !key || String(key) !== real) throw new Error('Clave incorrecta');
+  var main = props.getProperty('apiKey');
+  if (!main) { main = String(readConfig_().apiKey || ''); if (main) props.setProperty('apiKey', main); }
+  return [
+    { key: String(main || ''), perm: 'escribir' },
+    { key: String(props.getProperty('apiKeyNext') || ''), perm: 'escribir' },
+    { key: String(props.getProperty('apiKeyRead') || ''), perm: 'leer' }
+  ].filter(function (e) { return e.key.length >= 20; });
+}
+
+// Comparación de tiempo constante (no sale en cuanto encuentra una diferencia).
+function sameKey_(a, b) {
+  var n = Math.max(a.length, b.length), d = a.length ^ b.length;
+  for (var i = 0; i < n; i++) d |= (a.charCodeAt(i) || 0) ^ (b.charCodeAt(i) || 0);
+  return d === 0;
+}
+
+// Devuelve el permiso concedido ('leer' o 'escribir') o lanza error. need: permiso mínimo exigido.
+function checkKey_(key, need) {
+  var given = String(key || ''), granted = null;
+  keyTable_().forEach(function (e) {
+    if (sameKey_(given, e.key) && granted !== 'escribir') granted = e.perm;
+  });
+  if (!granted) { logFail_('Clave incorrecta'); throw new Error('Clave incorrecta'); }
+  if (need === 'escribir' && granted !== 'escribir') { logFail_('Clave de solo lectura usada para escribir'); throw new Error('Permiso insuficiente'); }
+  return granted;
+}
+
+// Anota los accesos fallidos (nunca la clave) como mucho una vez por minuto, para no llenar el registro.
+function logFail_(msg) {
+  try {
+    var cache = CacheService.getScriptCache();
+    if (cache.get('failLog')) return;
+    cache.put('failLog', '1', 60);
+    log_('Acceso rechazado: ' + msg);
+  } catch (e) { /* el registro nunca debe romper la API */ }
 }
 
 function log_(msg) {
