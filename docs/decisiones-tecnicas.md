@@ -37,9 +37,9 @@ Registro de por qué la app está hecha como está, qué se descartó y qué pro
 
 | Dato | Fuente | Notas |
 |---|---|---|
-| Valor liquidativo de los fondos iShares | Excel oficial de BlackRock (`…/fund/1515395013987.ajax?fileType=xls…&dataType=fund`), pestaña de histórico | Es la cifra oficial, la misma que usa el bróker. Se publica con **un día hábil de retraso**: la app muestra siempre la fecha del VL |
+| Valor liquidativo de los fondos | Excel oficial de la gestora (la dirección de descarga de cada fondo se guarda en la hoja privada, no aquí), pestaña de histórico | Es la cifra oficial, la misma que usa el bróker. Se publica con **un día hábil de retraso**: la app muestra siempre la fecha del VL |
 | Acciones, índices y EUR/USD | Yahoo Finance (`query1.finance.yahoo.com/v8/finance/chart`) con `User-Agent` de navegador | Devuelve 429 (demasiadas peticiones) con facilidad, sobre todo desde servidores compartidos. Respaldo: Stooq (CSV diario) para los símbolos que lo tienen |
-| Índices MSCI | Vía sus ETF (IWDA para MSCI World, EMIM para MSCI EM IMI) | MSCI no ofrece cotización gratuita; para una variación diaria orientativa el ETF basta |
+| Índices MSCI | Vía ETF equivalentes (uno por índice) | MSCI no ofrece cotización gratuita; para una variación diaria orientativa el ETF basta |
 | Cotización en vivo | `CacheService` de Apps Script | Evita llamar a Yahoo en cada apertura de la app |
 
 - El VL se **redondea a 3 decimales**, como hace el bróker, para que valor y resultado cuadren al céntimo. El bróker podría truncar en lugar de redondear: la diferencia máxima observada es de unos 0,3 €.
