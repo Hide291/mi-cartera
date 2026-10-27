@@ -10,6 +10,8 @@
  *   doGet / doPost → API JSON protegida con clave. Hay claves con permiso de lectura o de escritura (ver checkKey_).
  *
  * Este archivo no contiene datos personales: los datos viven solo en la hoja.
+ *
+ * @OnlyCurrentDoc  (limita el permiso a ESTA hoja; sin esto Google pide acceso a todas las hojas del usuario)
  */
 
 var TABLES = {
